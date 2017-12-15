@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Pathways. Serverless - Service discovery application.
+Resources:
+  PostApi:
+    Type: AWS::Serverless::Api
+    Properties:
+        StageName: prod
+        DefinitionBody:
+            swagger: 2.0
+            info:
+              title:
+                Ref: AWS::StackName
+            paths:
+              "/":
+                post:
+                  x-amazon-apigateway-auth:
+                    type: aws_iam
+                  x-amazon-apigateway-integration:
+                    httpMethod: POST
+                    type: aws_proxy
+                    uri:
+                      Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RestFunction.Arn}/invocations
+                  responses: {}
+
+  RestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.lambda_handler
+      Runtime: python2.7
+      CodeUri: ../src/restbackend.py
+      Policies:
+        - Version: '2012-10-17' # Policy Document
+          Statement:
+            - Effect: Allow
+              Action:
+                - iot:*
+              Resource:
+                - *
+      Environment:
+        Variables:
+          REGION: !Ref AWS::Region
+          functionARN: !Ref ProcessFunction.Arn
+      Events:
+        PostApi:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+            RestApiId:
+                Ref: PostApi
+
+  ProcessFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.lambda_handler
+      Runtime: python2.7
+      CodeUri: ../src/process.py
+      Policies:
+        - Version: '2012-10-17' # Policy Document
+          Statement:
+            - Effect: Allow
+              Action:
+                - iot:*
+              Resource:
+                - *
+      Environment:
+        Variables:
+          REGION: !Ref AWS::Region        
