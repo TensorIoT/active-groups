@@ -40,4 +40,4 @@ def lambda_handler(event, context):
     # TODO implement
     print event
     process(event)
-    return 'Hello from Lambda'
+    return 'Lambda Completed Successfully'

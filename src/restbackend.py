@@ -2,7 +2,9 @@ from time import sleep
 import boto3, json, os, uuid, logging, random, string
 
 iotClient = boto3.client('iot')
-functionARN = os.environ['functionArn']
+functionARN = os.environ['functionARN']
+REGION = os.environ['REGION']
+ACCOUNT = os.environ['ACCOUNT']
 
 def constructResponse(statusCode, responseBody):
     response = {
@@ -21,6 +23,36 @@ def lambda_handler(event, context):
     if inputBody['Operation'] not in ['NEW', 'GET', 'DELETE'] :
         return constructResponse(400, "Operation "+inputBody['Operation']+" Not permitted")
 
+    if inputBody['Operation'] == 'DELETE':
+        if 'GroupName' not in inputBody:
+            return constructResponse(400, "GroupName object not found")
+        groupName = inputBody['GroupName']
+        try:
+            response = iotClient.delete_topic_rule(
+                ruleName=groupName
+            )
+            response = iotClient.delete_thing_group(
+                thingGroupName=groupName
+            )
+            return constructResponse(200, json.dumps({'response': 'Group Deleted'}))
+        except Exception as e:
+            print e
+            return constructResponse(400, json.dumps({"Error": "Group Deletion Error"}))
+
+    if inputBody['Operation'] == 'GET':
+        if 'GroupName' not in inputBody:
+            return constructResponse(400, "GroupName object not found")
+        groupName = inputBody['GroupName']
+        try:
+            response = iotClient.describe_thing_group(
+                thingGroupName=groupName
+            )
+            print response
+            return constructResponse(200, json.dumps({"groupARN": response['thingGroupArn'], "groupID": response['thingGroupId']}))
+        except Exception as e:
+            print e
+            return constructResponse(400, json.dumps({"Error": "Group Retrieval Error"}))
+
     if inputBody['Operation'] == 'NEW':
         if 'Operator' not in inputBody:
             return constructResponse(400, "Operator object not found")
@@ -36,9 +68,9 @@ def lambda_handler(event, context):
 
         ruleDesc = inputBody['GroupName']
         ruleName = inputBody['GroupName']
-        attribute = 'temp'
-        operator = inputBody[Operator]
-        threshold = 30
+        attribute = inputBody['Attribute']
+        operator = inputBody['Operator']
+        threshold = inputBody['Threshold']
         groupName = inputBody['GroupName']
 
         try:
@@ -63,7 +95,7 @@ def lambda_handler(event, context):
                     'actions': [
                         {
                             'lambda': {
-                                'functionArn': functionARN
+                                'functionArn': 'arn:aws:lambda:'+REGION+':'+ACCOUNT+':function:'+functionARN
                             }
                         }
                     ],
@@ -71,7 +103,7 @@ def lambda_handler(event, context):
                 }
             )
             print response
-            return constructResponse(200, "Group Created")
+            return constructResponse(200, json.dumps({'response': 'Group Created'}))
         except Exception as e:
             print e
-            return constructResponse(400, e)
+            return constructResponse(400, json.dumps({"Error": "Group Creation Error"}))

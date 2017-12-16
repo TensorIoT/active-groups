@@ -1,7 +1,56 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Pathways. Serverless - Service discovery application.
+Description: Realtime Groups. Serverless - IOT Dynamic groups implementation.
 Resources:
+  ProcessFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: process.lambda_handler
+      Runtime: python2.7
+      CodeUri: ../src/process.py
+      Policies:
+        - Version: '2012-10-17' # Policy Document
+          Statement:
+            - Effect: Allow
+              Action: 'iot:*'
+              Resource: '*'
+
+  LambdaInvokePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt
+        - ProcessFunction
+        - Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: iot.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+
+  RestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: restbackend.lambda_handler
+      Runtime: python2.7
+      CodeUri: ../src/restbackend.py
+      Policies:
+        - Version: '2012-10-17' # Policy Document
+          Statement:
+            - Effect: Allow
+              Action: 'iot:*'
+              Resource: '*'
+      Environment:
+        Variables:
+          functionARN: !Ref ProcessFunction
+          REGION: !Ref AWS::Region
+          ACCOUNT: !Ref AWS::AccountId
+      Events:
+        PostApi:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+            RestApiId:
+                Ref: PostApi
+
   PostApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -22,48 +71,3 @@ Resources:
                     uri:
                       Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RestFunction.Arn}/invocations
                   responses: {}
-
-  RestFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: index.lambda_handler
-      Runtime: python2.7
-      CodeUri: ../src/restbackend.py
-      Policies:
-        - Version: '2012-10-17' # Policy Document
-          Statement:
-            - Effect: Allow
-              Action:
-                - iot:*
-              Resource:
-                - *
-      Environment:
-        Variables:
-          REGION: !Ref AWS::Region
-          functionARN: !Ref ProcessFunction.Arn
-      Events:
-        PostApi:
-          Type: Api
-          Properties:
-            Path: /
-            Method: POST
-            RestApiId:
-                Ref: PostApi
-
-  ProcessFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: index.lambda_handler
-      Runtime: python2.7
-      CodeUri: ../src/process.py
-      Policies:
-        - Version: '2012-10-17' # Policy Document
-          Statement:
-            - Effect: Allow
-              Action:
-                - iot:*
-              Resource:
-                - *
-      Environment:
-        Variables:
-          REGION: !Ref AWS::Region        
