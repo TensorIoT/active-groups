@@ -80,7 +80,8 @@ def lambda_handler(event, context):
                     'attributePayload': {
                         'attributes': {
                             'attribute': str(attribute),
-                            'threshold': str(threshold)
+                            'threshold': str(threshold),
+                            'type': 'dynamic'
                         }
                     }
                 }
