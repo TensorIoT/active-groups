@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Realtime Groups. Serverless - IOT Dynamic groups implementation.
+Description: Serverless implementation of AWS IoT Active Groups.
 Resources:
   ProcessFunction:
     Type: AWS::Serverless::Function
