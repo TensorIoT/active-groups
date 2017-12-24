@@ -3,6 +3,21 @@ This service provides a serverless implementation of Active groups in AWS IoT. U
 
 For ex: You can have a group called HighTemperature and enable it in such a way that all IoT Things that has an attribute called "Temperature" and with a value > 100, gets automatically added to the group
 
+## Architecture:
+
+### Creating Active groups
+
+To create an active group, you will need to call the microservice rest api end point. The architecture for group creation is shown in the diagram below
+
+![Active Groups - Group Creation](images/agc.png)
+
+### Active groups runtime
+
+Once deployed the active groups are automatically activated and starts monitoring the device attribute changes in the shadow. In case of a breach in the defined threshold, the device is automatically added or removed from the group by the process lambda. The runtime flow is depicted below.
+
+![Active Groups - Runtime](images/agr.png)
+
+
 ## Use Cases:
 1. Dynamically group the devices based on an specific attributes
 2. Use the active groups to monitor and react to device changes
