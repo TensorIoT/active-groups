@@ -73,5 +73,63 @@ And an example of Javascript SDK usage: http://docs.aws.amazon.com/apigateway/la
 }
 ```
 
+## Testing
+
+1. Find the rest api endpoint
+2. Using Postman or your favorite tool, submit a POST request with a body
+```
+{
+    "Operation": "NEW",
+    "GroupName": "HighTemperature",
+    "Attribute": "Temperature",
+    "Operator": ">",
+    "Threshold": "100"
+}	
+```
+You should receive the below response
+```
+{
+    "response": "Group Created"
+}
+```
+3. Open AWS IOT console and create a thing called "active_group_test_thing"
+4. In the AWS IOT console - traverse to the Manage on the left and select groups.
+5. Now select HighTemperature group and select Things to confirm it is empty
+6. In the AWS IoT console - traverse to the test option on the left and select publish to a topic
+7. Submit the below message to the topic "$aws/things/active_group_test_thing/shadow/update"
+```
+{
+    "state": {
+        "reported": {
+            "Temperature": "90"
+        }
+    }
+} 
+```
+8. Check the things in the group to ensure it is still empty
+9. Now lets give a temperature above 100. Send the below message to topic "$aws/things/active_group_test_thing/shadow/update"
+```
+{
+    "state": {
+        "reported": {
+            "Temperature": "102"
+        }
+    }
+}
+```
+10. Check the things in the group to ensure the active_group_test_thing is now a member of the group
+11. Now lets give a temperature below 100. Send the below message to topic "$aws/things/active_group_test_thing/shadow/update"
+```
+{
+    "state": {
+        "reported": {
+            "Temperature": "80"
+        }
+    }
+}
+```
+12. Check the things in the group to ensure the active_group_test_thing is not a member of the group anymore
+13. Tesing complete
+
 ## License
 This is released under the MIT license. Details can be found in the LICENSE file.
