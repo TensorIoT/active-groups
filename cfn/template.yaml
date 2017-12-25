@@ -7,7 +7,7 @@ Resources:
     Properties:
       Handler: process.lambda_handler
       Runtime: python2.7
-      CodeUri: ../src/process.py
+      CodeUri: src/process.py
       Policies:
         - Version: '2012-10-17' # Policy Document
           Statement:
@@ -30,7 +30,7 @@ Resources:
     Properties:
       Handler: restbackend.lambda_handler
       Runtime: python2.7
-      CodeUri: ../src/restbackend.py
+      CodeUri: src/restbackend.py
       Policies:
         - Version: '2012-10-17' # Policy Document
           Statement:
